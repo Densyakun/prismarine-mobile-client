@@ -47,15 +47,43 @@ const pathfinder = require('mineflayer-pathfinder')
 const { Vec3 } = require('vec3')
 const { initVR } = require('./lib/vr')
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').then(registration => {
-      console.log('SW registered: ', registration)
-    }).catch(registrationError => {
-      console.log('SW registration failed: ', registrationError)
-    })
-  })
+// Older versions registered a Workbox service worker that cached index.html.
+// That left some clients with an HTML document from a previous deployment and
+// a mismatched script, which produced null-element crashes. Unregister any old
+// worker and clear its caches once, then reload to pick up the current HTML.
+async function cleanupOldServiceWorker () {
+  if (!('serviceWorker' in navigator) && !window.caches) return
+  let changed = false
+  try {
+    if (navigator.serviceWorker) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      if (registrations.length) {
+        await Promise.all(registrations.map((registration) => registration.unregister()))
+        changed = true
+      }
+    }
+  } catch (e) {}
+
+  try {
+    if (window.caches) {
+      const keys = await window.caches.keys()
+      if (keys.length) {
+        await Promise.all(keys.map((key) => window.caches.delete(key)))
+        changed = true
+      }
+    }
+  } catch (e) {}
+
+  if (changed) {
+    try {
+      if (!window.sessionStorage.getItem('pmui.cache.cleared')) {
+        window.sessionStorage.setItem('pmui.cache.cleared', '1')
+        window.location.reload()
+      }
+    } catch (e) {}
+  }
 }
+cleanupOldServiceWorker()
 
 const maxPitch = 0.5 * Math.PI
 const minPitch = -0.5 * Math.PI
@@ -162,15 +190,20 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', () => window.scrollTo(0, 0))
 }
 
-const showEl = (str) => { document.getElementById(str).style = 'display:block' }
+const showEl = (str) => {
+  const element = document.getElementById(str)
+  if (element) element.style = 'display:block'
+}
 async function main () {
   for (const id of ['play-screen', 'singleplayer-screen']) {
     const menu = document.getElementById(id)
+    if (!menu) continue
 
     menu.addEventListener('connect', e => {
       const options = e.detail
       menu.style = 'display: none;'
-      document.getElementById('title-screen').style.display = 'none'
+      const title = document.getElementById('title-screen')
+      if (title) title.style.display = 'none'
       showEl('loading-screen')
       removePanorama()
       connect(options)
