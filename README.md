@@ -83,9 +83,9 @@ SSRF 対策でプライベート IP が拒否されるため `PROXY_ALLOW_PRIVAT
 
 2. Vercel の **Account Settings → Tokens** でアクセストークンを作成
 3. GitHub リポジトリの **Settings → Secrets and variables → Actions** に登録
-   - `VERCEL_TOKEN`
-   - `VERCEL_ORG_ID`（`orgId`）
-   - `VERCEL_PROJECT_ID`（`projectId`）
+   - **Secrets**: `VERCEL_TOKEN`
+   - **Variables**: `VERCEL_ORG_ID`（`orgId`）, `VERCEL_PROJECT_ID`（`projectId`）
+   - （`VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` は Secrets に入れても動作します）
 4. `main` へ push（または Actions 画面から `Deploy to Vercel` を手動実行）
 
 Workflow は `npm ci` → `npm test` → `vercel pull` → `vercel build --prod` →
