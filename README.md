@@ -141,7 +141,7 @@ Vercel は WebSocket の最大実行時間が短いため、TCP プロキシ用�
 | --- | --- |
 | `PROXY_ALLOWED_HOSTS` | 接続を許可するホスト。カンマ区切り。`*.example.com` 形式も可。未設定は全パブリックホスト許可 |
 | `PROXY_MAX_CONNECTIONS` | 1 インスタンスあたりの最大同時 TCP 接続数（既定 200） |
-| `MSA_CLIENT_ID` | Microsoft のパブリッククライアント ID（既定は公式 Java ランチャーの `00000000402b5328`） |
+| `MSA_CLIENT_ID` | Microsoft のパブリッククライアント ID（既定は prismarine-auth と同じ Nintendo Switch タイトル `00000000441cc96b`） |
 | `PROXY_ALLOW_PRIVATE` | `1` でプライベート IP への接続を許可。**ローカル開発専用** |
 
 プロキシは SSRF 対策としてプライベート/ループバック/リンクローカル宛の接続を拒否します。

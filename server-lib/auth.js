@@ -1,10 +1,11 @@
 'use strict'
 
-const { Authflow } = require('prismarine-auth')
+const { Authflow, Titles } = require('prismarine-auth')
 
-// Public "Minecraft: Java Edition" client id used by the official launcher.
-// The device code flow does not require a client secret.
-const CLIENT_ID = process.env.MSA_CLIENT_ID || '00000000402b5328'
+// prismarine-auth uses the Nintendo Switch title for the live device-code flow
+// when authenticating Java Edition. The legacy Java launcher id can obtain an
+// MSA token but is rejected later by the Xbox title/XSTS exchange (403).
+const CLIENT_ID = process.env.MSA_CLIENT_ID || Titles.MinecraftNintendoSwitch
 const SCOPE = 'service::user.auth.xboxlive.com::MBI_SSL'
 const DEVICE_CODE_URL = 'https://login.live.com/oauth20_connect.srf'
 const TOKEN_URL = 'https://login.live.com/oauth20_token.srf'
@@ -86,8 +87,17 @@ async function exchangeMinecraftSession (token) {
     return caches[cacheName]
   }
 
-  const flow = new Authflow('', cacheFactory, { flow: 'live', authTitle: CLIENT_ID })
-  const result = await flow.getMinecraftJavaToken({ fetchProfile: true })
+  const flow = new Authflow('', cacheFactory, { flow: 'live', authTitle: CLIENT_ID, deviceType: 'Nintendo' })
+  let result
+  try {
+    result = await flow.getMinecraftJavaToken({ fetchProfile: true })
+  } catch (e) {
+    const detail = e && e.message ? e.message : String(e)
+    if (/^403\b/.test(detail)) {
+      throw new Error('Xbox Live rejected the sign-in (403). Make sure this Microsoft account has an Xbox profile and can play Minecraft: Java Edition, then try again.')
+    }
+    throw new Error(`Minecraft sign-in failed: ${detail}`)
+  }
   if (!result.token) throw new Error('Failed to obtain a Minecraft access token')
   if (!result.profile || result.profile.error) {
     const reason = result.profile?.error ?? 'unknown error'
