@@ -341,6 +341,7 @@ body.mc-overlay-open #mobile-controls {
 #ui-root > pmui-pausescreen,
 #ui-root > pmui-loadingscreen,
 #ui-root > pmui-playscreen,
+#ui-root > pmui-singleplayerscreen,
 #ui-root > pmui-keybindsscreen,
 #ui-root > pmui-optionsscreen,
 #ui-root > pmui-titlescreen,
