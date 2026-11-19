@@ -1,0 +1,350 @@
+:root {
+  --guiScaleFactor: 3;
+  --guiScale: 3;
+  --chatWidth: 320px;
+  --chatHeight: 180px;
+  --chatScale: 1;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.dirt-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: url('textures/1.17.1/gui/options_background.png'), rgba(0, 0, 0, 0.7);
+  background-size: 16px;
+  background-repeat: repeat;
+  width: 100%;
+  height: 100%;
+  transform-origin: top left;
+  transform: scale(2);
+  background-blend-mode: overlay;
+}
+
+@font-face {
+    font-family: minecraft;
+    src: url(minecraftia.woff);
+}
+
+@font-face {
+    font-family: mojangles;
+    src: url(mojangles.ttf);
+}
+
+body {
+  overflow: hidden;
+  position: relative;
+  margin:0;
+  padding:0;
+  height: 100vh;
+  font-family: sans-serif;
+  background: #333;
+  /* background: linear-gradient(#141e30, #243b55); */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+	height: 100%;
+	width: 100%;
+	font-size: 0;
+	margin: 0;
+	padding: 0;
+}
+
+#ui-root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  transform: scale(var(--guiScale));
+  width: calc(100% / var(--guiScale));
+  height: calc(100% / var(--guiScale));
+  z-index: 10;
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -o-crisp-edges;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+  font-family: minecraft, mojangles, monospace;
+}
+
+@media only screen and (max-width: 971px) {
+  #ui-root {
+    transform: scale(2);
+    width: calc(100% / 2);
+    height: calc(100% / 2);
+  }
+}
+
+@media only screen and (max-height: 670px) {
+  #ui-root {
+    transform: scale(2);
+    width: calc(100% / 2);
+    height: calc(100% / 2);
+  }
+}
+
+@media only screen and (max-width: 561px) {
+  #ui-root {
+    transform: scale(1);
+    width: calc(100% / 1);
+    height: calc(100% / 1);
+  }
+}
+
+@media only screen and (max-height: 430px) {
+  #ui-root {
+    transform: scale(1);
+    width: calc(100% / 1);
+    height: calc(100% / 1);
+  }
+}
+/* ------------------------------------------------------------------ *
+ * Mobile / touch controls
+ * ------------------------------------------------------------------ */
+
+html,
+body {
+  height: 100%;
+  height: 100dvh;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+canvas {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#mobile-root {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+#mobile-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#mobile-controls[hidden],
+body.mc-overlay-open #mobile-controls {
+  display: none;
+}
+
+#mobile-controls button {
+  pointer-events: auto;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: rgba(10, 14, 22, 0.52);
+  border: 2px solid rgba(255, 255, 255, 0.38);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+  padding: 0;
+}
+
+#mobile-controls button.mc-down,
+#mobile-controls button.mc-on {
+  background: rgba(79, 190, 120, 0.72);
+  border-color: rgba(220, 255, 230, 0.9);
+  transform: scale(0.96);
+}
+
+.mc-stats {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  left: calc(10px + env(safe-area-inset-left));
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.mc-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(10, 14, 22, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mc-stat i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.mc-hp i { background: #ff5a5a; }
+.mc-food i { background: #e0a43c; }
+
+.mc-top {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top));
+  right: calc(8px + env(safe-area-inset-right));
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+}
+
+.mc-top button {
+  width: 58px;
+  height: 38px;
+  font-size: 11px;
+}
+
+.mc-joystick {
+  position: absolute;
+  left: calc(16px + env(safe-area-inset-left));
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.18));
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mc-joystick.mc-active {
+  border-color: rgba(255, 255, 255, 0.65);
+}
+
+.mc-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.mc-toggles {
+  position: absolute;
+  left: calc(160px + env(safe-area-inset-left));
+  bottom: calc(142px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mc-toggles button {
+  width: 62px;
+  height: 34px;
+  font-size: 11px;
+  border-radius: 10px;
+  opacity: 0.9;
+}
+
+.mc-actions {
+  position: absolute;
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: 70px 70px;
+  grid-template-rows: 58px 58px;
+  gap: 8px;
+}
+
+.mc-actions button {
+  width: 70px;
+  height: 58px;
+  border-radius: 14px;
+  font-size: 12px;
+}
+
+@media (orientation: landscape) {
+  .mc-joystick {
+    width: 116px;
+    height: 116px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .mc-knob {
+    width: 52px;
+    height: 52px;
+    margin: -26px 0 0 -26px;
+  }
+
+  .mc-toggles {
+    left: calc(142px + env(safe-area-inset-left));
+    bottom: calc(118px + env(safe-area-inset-bottom));
+  }
+
+  .mc-actions {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 360px) {
+  .mc-joystick {
+    width: 112px;
+    height: 112px;
+  }
+
+  .mc-actions {
+    grid-template-columns: 62px 62px;
+    grid-template-rows: 52px 52px;
+  }
+
+  .mc-actions button {
+    width: 62px;
+    height: 52px;
+  }
+}
+
+/* Let touches on empty HUD areas pass through to the WebGL canvas so that
+ * dragging anywhere rotates the camera, while menus still receive input. */
+#ui-root {
+  pointer-events: none;
+}
+
+#ui-root > pmui-pausescreen,
+#ui-root > pmui-loadingscreen,
+#ui-root > pmui-playscreen,
+#ui-root > pmui-keybindsscreen,
+#ui-root > pmui-optionsscreen,
+#ui-root > pmui-titlescreen,
+#ui-root > pmui-authscreen,
+#ui-root > pmui-inventoryscreen {
+  pointer-events: auto;
+}

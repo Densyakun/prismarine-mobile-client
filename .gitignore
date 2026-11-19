@@ -1,0 +1,7 @@
+node_modules/
+.vscode
+public
+.DS_Store
+.idea/
+*.iml
+.vercel/

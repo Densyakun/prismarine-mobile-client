@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "installCommand": "npm install",
+  "functions": {
+    "api/auth/*.js": {
+      "maxDuration": 60
+    },
+    "api/session-join.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/sessionserver/(.*)",
+      "destination": "/api/session-join"
+    }
+  ],
+  "framework": null
+}
