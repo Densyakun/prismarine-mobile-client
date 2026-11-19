@@ -57,13 +57,26 @@ jobs:
       - name: Build for Vercel
         run: vercel build --prod --token="$VERCEL_TOKEN"
 
+      - name: Prepare clean deployment tree
+        # Deploy from a tree without .git so Vercel does not attach the commit
+        # author (the git identity is intentionally fixed to a different
+        # address than the Vercel team account).
+        run: |
+          rm -rf /tmp/vercel-staging
+          mkdir -p /tmp/vercel-staging
+          cp -r .vercel /tmp/vercel-staging/.vercel
+
       - name: Deploy to production
         id: deploy
+        working-directory: /tmp/vercel-staging
         run: |
           set -euo pipefail
-          vercel deploy --prebuilt --prod --archive=tgz --yes --token="$VERCEL_TOKEN" > /tmp/vercel-deploy.out
-          cat /tmp/vercel-deploy.out
-          url="$(tail -n 1 /tmp/vercel-deploy.out)"
+          env -i PATH="$PATH" HOME="$HOME"             VERCEL_TOKEN="$VERCEL_TOKEN"             VERCEL_ORG_ID="$VERCEL_ORG_ID"             VERCEL_PROJECT_ID="$VERCEL_PROJECT_ID"             vercel deploy --prebuilt --prod --archive=tgz --yes --json > /tmp/vercel-deploy.json
+          cat /tmp/vercel-deploy.json
+          url="$(jq -r '.url // .deployment.url // empty' /tmp/vercel-deploy.json 2>/dev/null || true)"
+          if [ -z "$url" ]; then
+            url="$(grep -oE 'https://[^\" ]+\.vercel\.app' /tmp/vercel-deploy.json | tail -n 1 || true)"
+          fi
           echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed to ${url:-production}"
 
