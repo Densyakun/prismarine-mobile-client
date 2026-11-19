@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "node scripts/patchPackages.js",
-    "build": "webpack --config webpack.prod.js",
-    "build-dev": "webpack --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js && npm run build:embedded",
+    "build-dev": "webpack --config webpack.dev.js && npm run build:embedded",
+    "build:embedded": "webpack --config webpack.embedded.js",
     "start": "node --max-old-space-size=8192 server.js 8080 dev",
     "prod-start": "node server.js",
     "build-dev-start": "npm run build-dev && npm run prod-start",
@@ -43,6 +44,7 @@
   "dependencies": {
     "compression": "^1.7.4",
     "express": "^4.17.1",
+    "flying-squid": "^1.12.0",
     "ismobilejs": "^1.1.1",
     "lit": "^2.0.2",
     "prismarine-auth": "^2.7.0",

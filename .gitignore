@@ -5,3 +5,5 @@ public
 .idea/
 *.iml
 .vercel/
+data/
+logs/

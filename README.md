@@ -33,7 +33,20 @@
 - Xbox Live / XSTS / Minecraft Services のトークン交換はサーバー側で実行
 - Mojang の session server (`join`) も CORS 回避のためサーバー経由
 
-### 3. 未実装だった機能
+### 3. シングルプレイ（外部サーバー不要）
+- タイトル画面の **Singleplayer** から、ワールドを生成して遊べます
+- セルフホスト時は Node サーバー内の `flying-squid` を使用します
+- セルフホスト API が無い場合（Vercel / GitHub Pages などの静的ホスティング）は、
+  同じ `flying-squid` を**ブラウザ内**で起動して自動的にフォールバックします
+- `/?singleplayer=1` または `/singleplayer` を開くと、最初からブラウザ内モードを強制できます
+- ブラウザ内モードのワールドは IndexedDB に保存され、次回続きから再開できます
+- ブラウザ内エンジンは `singleplayer-server.js` として別ファイル・遅延読み込みされるため、
+  通常のクライアント起動時の読み込み量は増えません
+- サバイバル / クリエイティブ、ワールド名、オフラインユーザー名を選択可能
+- セルフホスト時のワールドは `data/singleplayer/<ワールド名>/` に Anvil 形式で保存され、
+  シングルプレイ用の埋め込みサーバーだけはプロキシのプライベート IP 制限の例外になります
+
+### 4. 未実装だった機能
 | ロードマップ | 状態 | 内容 |
 | --- | --- | --- |
 | Containers / Inventory | 実装 | インベントリ、チェスト等の汎用コンテナ UI。左クリック / 右クリック / Shift クリック相当、アイテム数表示 |
@@ -143,12 +156,22 @@ Vercel は WebSocket の最大実行時間が短いため、TCP プロキシ用�
   ├─ POST /api/auth/device  → Microsoft device code
   ├─ POST /api/auth/poll    → トークン交換（Xbox → XSTS → Minecraft）
   ├─ POST /api/auth/refresh → セッション更新
-  └─ POST /api/sessionserver/session/minecraft/join → Mojang join の代理
+  ├─ POST /api/sessionserver/session/minecraft/join → Mojang join の代理
+  └─ シングルプレイ
+      ├─ セルフホスト時
+      │   ├─ POST /api/singleplayer/start  → サーバー内サーバー起動 (flying-squid)
+      │   ├─ POST /api/singleplayer/stop   → サーバー内サーバー停止
+      │   └─ GET  /api/singleplayer/status → 起動状態
+      └─ API が無い場合は singleplayer-server.js を遅延読み込みし、
+         ブラウザ内の仮想 TCP (net.createServer) で同じページ内の
+         flying-squid に接続する（ワールドは IndexedDB に保存）
 ```
 
-- `lib/net.js`: ブラウザ用 `net` 実装（net-browserify 互換プロトコル）
+- `lib/net.js`: ブラウザ用 `net` 実装（TCP プロキシ + ブラウザ内ループバック）
 - `server-lib/proxy.js`: セルフホスト用 TCP ↔ WebSocket プロキシ
 - `server-lib/auth.js`: prismarine-auth を使ったサーバー側トークン交換
+- `server-lib/singleplayer.js`: セルフホスト時の flying-squid 管理
+- `embedded/`: ブラウザ内シングルプレイエンジン（flying-squid + memfs + IndexedDB）
 - `api/`: Vercel Functions（auth / session join）
 
 ## モバイル操作一覧
@@ -175,6 +198,12 @@ Vercel は WebSocket の最大実行時間が短いため、TCP プロキシ用�
 - Minecraft 1.19 以降の「署名付きチャット」には未対応です。既定バージョンは 1.18.2 です。
 - Render distance はブラウザのメモリと GPU に依存します（モバイルでは 2〜4 推奨）。
 - 公式アカウントログインは `/api` が動作している必要があります（GitHub Pages 等の静的ホスティング単体では不可）。
+- ブラウザ内シングルプレイは、初回プレイ時に約 4MB のエンジン
+  （`singleplayer-server.js`）を読み込みます。通常のクライアント起動には含まれません。
+- ブラウザ内シングルプレイのワールドは、そのブラウザの IndexedDB に保存されます。
+  ブラウザのデータを消去するとワールドも消えます。
+- セルフホストしたシングルプレイのワールドはサーバー側（`data/`）に保存されるため、
+  複数人が同じインスタンスを使う場合は同じワールドを共有します。
 
 ## ライセンス / クレジット
 

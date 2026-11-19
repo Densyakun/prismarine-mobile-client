@@ -1,5 +1,13 @@
 /* global THREE */
 
+// `/?singleplayer=1` (or /singleplayer) runs the singleplayer world inside the
+// browser instead of requiring a self-hosted Node.js server. This must be set
+// before the menu custom elements are defined below.
+const startupParams = new URLSearchParams(window.location.search)
+if (startupParams.has('singleplayer') || /\/singleplayer\/?$/.test(window.location.pathname)) {
+  window.__PMUI_EMBEDDED_SINGLEPLAYER__ = true
+}
+
 require('./lib/chat')
 
 require('./lib/menus/components/button')
@@ -14,6 +22,7 @@ require('./lib/menus/components/playerlist_overlay')
 require('./lib/menus/components/bossbars_overlay')
 require('./lib/menus/hud')
 require('./lib/menus/play_screen')
+require('./lib/menus/singleplayer_screen')
 require('./lib/menus/pause_screen')
 require('./lib/menus/loading_screen')
 require('./lib/menus/keybinds_screen')
@@ -155,15 +164,18 @@ if (window.visualViewport) {
 
 const showEl = (str) => { document.getElementById(str).style = 'display:block' }
 async function main () {
-  const menu = document.getElementById('play-screen')
+  for (const id of ['play-screen', 'singleplayer-screen']) {
+    const menu = document.getElementById(id)
 
-  menu.addEventListener('connect', e => {
-    const options = e.detail
-    menu.style = 'display: none;'
-    showEl('loading-screen')
-    removePanorama()
-    connect(options)
-  })
+    menu.addEventListener('connect', e => {
+      const options = e.detail
+      menu.style = 'display: none;'
+      document.getElementById('title-screen').style.display = 'none'
+      showEl('loading-screen')
+      removePanorama()
+      connect(options)
+    })
+  }
 }
 
 function createMicrosoftAuth (session) {

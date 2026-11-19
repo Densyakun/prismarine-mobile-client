@@ -46,7 +46,7 @@ function isHostAllowed (host) {
   })
 }
 
-async function assertSafeTarget (host, port) {
+async function assertSafeTarget (host, port, options = {}) {
   if (!host || typeof host !== 'string') throw new Error('Missing host')
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
   if (!isHostAllowed(host)) throw new Error('This server is not allowed by the proxy policy')
@@ -58,7 +58,9 @@ async function assertSafeTarget (host, port) {
     throw new Error(`Cannot resolve ${host}`)
   }
   if (!addresses.length) throw new Error(`Cannot resolve ${host}`)
-  if (process.env.PROXY_ALLOW_PRIVATE !== '1' && addresses.some((entry) => isPrivateIp(entry.address))) {
+  const trusted = typeof options.isTrustedTarget === 'function' && options.isTrustedTarget(host, port)
+  if (process.env.PROXY_ALLOW_PRIVATE !== '1' && !trusted &&
+    addresses.some((entry) => isPrivateIp(entry.address))) {
     throw new Error('Private or local network addresses are not allowed')
   }
 }
@@ -121,7 +123,7 @@ function createProxy (options = {}) {
       const port = Number(body.port || 25565)
 
       if (connectionCount >= MAX_CONNECTIONS) throw new Error('The proxy is busy. Please try again.')
-      await assertSafeTarget(host, port)
+      await assertSafeTarget(host, port, { isTrustedTarget: options.isTrustedTarget })
 
       const tcp = net.connect({ host, port })
       tcp.setNoDelay(true)

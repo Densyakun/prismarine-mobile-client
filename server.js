@@ -7,8 +7,12 @@ const compression = require('compression')
 const path = require('path')
 const { createProxy } = require('./server-lib/proxy')
 const { requestDeviceCode, pollDeviceCode, refreshSession } = require('./server-lib/auth')
+const { createSingleplayerManager } = require('./server-lib/singleplayer')
+const config = require('./config.json')
 
 const app = express()
+
+const singleplayer = createSingleplayerManager({ defaultVersion: config.defaultVersion })
 
 app.disable('x-powered-by')
 
@@ -18,6 +22,8 @@ function noStore (_, res, next) {
 }
 
 app.get('/config.json', (_, res) => res.sendFile(path.join(__dirname, 'config.json')))
+
+app.get('/singleplayer', (_, res) => res.redirect('/?singleplayer=1'))
 
 app.post('/api/auth/device', noStore, async (_, res) => {
   try {
@@ -60,9 +66,29 @@ app.post('/api/sessionserver/session/minecraft/join', express.json(), async (req
   }
 })
 
+app.get('/api/singleplayer/status', noStore, (_, res) => {
+  res.json(singleplayer.status())
+})
+
+app.post('/api/singleplayer/start', noStore, express.json(), async (req, res) => {
+  try {
+    res.json(await singleplayer.start(req.body || {}))
+  } catch (e) {
+    res.status(503).json({ error: e.message })
+  }
+})
+
+app.post('/api/singleplayer/stop', noStore, async (_, res) => {
+  await singleplayer.stop()
+  res.json({ running: false })
+})
+
 app.use(compression())
 
-const proxy = createProxy({ urlRoot: '/api/vm/net' })
+const proxy = createProxy({
+  urlRoot: '/api/vm/net',
+  isTrustedTarget: (host, port) => singleplayer.isTrustedTarget(host, port)
+})
 app.post('/api/vm/net/connect', express.json(), proxy.connect)
 app.options('/api/vm/net/connect', proxy.connect)
 
@@ -70,14 +96,21 @@ if (process.argv[3] === 'dev') {
   // https://webpack.js.org/guides/development/#using-webpack-dev-middleware
   const webpackDevMiddleware = require('webpack-dev-middleware')
   const config = require('./webpack.dev.js')
+  const embedded = require('./webpack.embedded.js')
+  const embeddedConfig = {
+    ...embedded,
+    mode: 'development',
+    devtool: false,
+    optimization: { minimize: false },
+    output: {
+      ...embedded.output,
+      publicPath: '/'
+    }
+  }
   const webpack = require('webpack')
-  const compiler = webpack(config)
+  const compiler = webpack([config, embeddedConfig])
 
-  app.use(
-    webpackDevMiddleware(compiler, {
-      publicPath: config.output.publicPath
-    })
-  )
+  app.use(webpackDevMiddleware(compiler))
 } else {
   app.use(express.static(path.join(__dirname, './public')))
 }
@@ -86,3 +119,12 @@ const server = app.listen(process.argv[2] === undefined ? 8080 : process.argv[2]
   console.log('Server listening on port ' + server.address().port)
 })
 proxy.attach(server)
+
+async function shutdown () {
+  await singleplayer.stop()
+  server.close(() => process.exit(0))
+  setTimeout(() => process.exit(0), 2000).unref()
+}
+
+process.once('SIGINT', shutdown)
+process.once('SIGTERM', shutdown)

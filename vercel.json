@@ -15,6 +15,10 @@
     {
       "source": "/api/sessionserver/(.*)",
       "destination": "/api/session-join"
+    },
+    {
+      "source": "/singleplayer",
+      "destination": "/index.html"
     }
   ],
   "framework": null
