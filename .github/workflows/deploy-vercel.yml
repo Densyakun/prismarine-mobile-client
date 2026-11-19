@@ -60,9 +60,12 @@ jobs:
       - name: Deploy to production
         id: deploy
         run: |
-          url="$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tail -n 1)"
+          set -euo pipefail
+          vercel deploy --prebuilt --prod --archive=tgz --yes --token="$VERCEL_TOKEN" > /tmp/vercel-deploy.out
+          cat /tmp/vercel-deploy.out
+          url="$(tail -n 1 /tmp/vercel-deploy.out)"
           echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
-          echo "Deployed to $url"
+          echo "Deployed to ${url:-production}"
 
       - name: Deployment summary
         run: |
