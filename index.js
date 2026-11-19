@@ -37,6 +37,7 @@ const Cursor = require('./lib/cursor')
 const Sky = require('./lib/sky')
 const SoundManager = require('./lib/sounds')
 const { getMobileControls } = require('./lib/mobile_controls')
+const { attachItemEntities } = require('./lib/item_entities')
 
 // Workaround for process.versions.node not existing in the browser
 process.versions.node = '14.0.0'
@@ -387,6 +388,7 @@ async function connect (options) {
     }
 
     // Link WorldView and Viewer
+    attachItemEntities({ bot, viewer, mcData })
     viewer.listen(worldView)
     worldView.listenToBot(bot)
     worldView.init(bot.entity.position)
@@ -511,9 +513,13 @@ async function connect (options) {
       keyBindScrn.keymaps.forEach(km => {
         if (e.code === km.key) {
           switch (km.defaultKey) {
-            case 'KeyQ':
-              if (bot.heldItem) bot.tossStack(bot.heldItem)
+            case 'KeyQ': {
+              const slot = bot.inventory.hotbarStart + (bot.quickBarSlot || 0)
+              if (bot.inventory.slots[slot]) {
+                bot.clickWindow(slot, 0, 4).catch(() => {})
+              }
               break
+            }
             case 'ControlLeft':
               bot.setControlState('sprint', true)
               break
@@ -524,10 +530,10 @@ async function connect (options) {
               bot.setControlState('jump', true)
               break
             case 'KeyD':
-              bot.setControlState('left', true)
+              bot.setControlState('right', true)
               break
             case 'KeyA':
-              bot.setControlState('right', true)
+              bot.setControlState('left', true)
               break
             case 'KeyS':
               bot.setControlState('back', true)
@@ -554,10 +560,10 @@ async function connect (options) {
               bot.setControlState('jump', false)
               break
             case 'KeyD':
-              bot.setControlState('left', false)
+              bot.setControlState('right', false)
               break
             case 'KeyA':
-              bot.setControlState('right', false)
+              bot.setControlState('left', false)
               break
             case 'KeyS':
               bot.setControlState('back', false)
@@ -580,6 +586,7 @@ async function connect (options) {
     inventoryScreen.setBot(bot)
     bot.on('windowOpen', (window) => {
       inventoryScreen.open(window)
+      document.exitPointerLock()
       updateMobileOverlay()
       soundManager.play('open')
     })
@@ -629,6 +636,7 @@ function openInventory () {
   const screen = document.getElementById('inventory-screen')
   screen.setBot(currentBot)
   screen.open(null)
+  document.exitPointerLock()
   updateMobileOverlay()
   soundManager.play('open')
 }

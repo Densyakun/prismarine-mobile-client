@@ -118,6 +118,8 @@ class SingleplayerManager {
       'max-entities': 200
     })
 
+    if (typeof server.setTime === 'function') server.setTime(1000)
+
     let port
     try {
       port = await new Promise((resolve, reject) => {

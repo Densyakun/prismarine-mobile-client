@@ -119,6 +119,9 @@ async function doStart (options) {
     'max-entities': 200
   })
 
+  // Start new worlds in the daytime like the vanilla "day" default.
+  if (typeof mcServer.setTime === 'function') mcServer.setTime(1000)
+
   let port
   try {
     port = await new Promise((resolve, reject) => {
