@@ -114,6 +114,74 @@ let cursor = null
 let sky = null
 let currentBot = null
 let inGame = false
+let creativeFlying = false
+let lastJumpTap = 0
+
+const ABILITY_INVULNERABLE = 0x01
+const ABILITY_FLYING = 0x02
+const ABILITY_ALLOW_FLYING = 0x04
+const ABILITY_CREATIVE = 0x08
+
+function isCreativeMode (bot) {
+  if (!bot) return false
+  if (bot.player && bot.player.gamemode === 1) return true
+  return !!(bot.game && bot.game.gameMode === 'creative')
+}
+
+function sendCreativeAbilities (bot, flying) {
+  if (!bot || !bot._client) return
+  const flags = ABILITY_INVULNERABLE | ABILITY_ALLOW_FLYING | ABILITY_CREATIVE | (flying ? ABILITY_FLYING : 0)
+  try {
+    bot._client.write('abilities', { flags, flyingSpeed: 0.05, walkingSpeed: 0.1 })
+  } catch (e) {}
+}
+
+function setCreativeFlying (on) {
+  const bot = currentBot
+  if (!bot || !bot.creative) return
+  if (on && !isCreativeMode(bot)) return
+  if (creativeFlying === on) return
+  creativeFlying = on
+  try {
+    if (on) {
+      bot.creative.startFlying()
+      if (bot.entity && bot.entity.velocity) bot.entity.velocity.y = 0
+    } else {
+      bot.creative.stopFlying()
+      if (bot.entity && bot.entity.velocity) bot.entity.velocity.y = 0
+    }
+  } catch (e) {}
+  sendCreativeAbilities(bot, on)
+  mobileControls.setFlying(on)
+}
+
+function toggleCreativeFlight () {
+  setCreativeFlying(!creativeFlying)
+}
+
+function handleJumpTap () {
+  if (!isCreativeMode(currentBot)) return
+  const now = performance.now()
+  if (now - lastJumpTap < 300) {
+    lastJumpTap = 0
+    toggleCreativeFlight()
+  } else {
+    lastJumpTap = now
+  }
+}
+
+function swapHands (bot) {
+  if (!bot || !bot._client) return
+  if (bot.supportFeature && bot.supportFeature('doesntHaveOffHandSlot')) return
+  try {
+    bot._client.write('block_dig', {
+      status: 6,
+      location: { x: 0, y: 0, z: 0 },
+      face: 0,
+      sequence: 0
+    })
+  } catch (e) {}
+}
 
 // Menu panorama background
 function addPanoramaCubeMap () {
@@ -315,6 +383,8 @@ async function connect (options) {
 
   const bot = mineflayer.createBot(botOptions)
   currentBot = bot
+  creativeFlying = false
+  lastJumpTap = 0
   hud.preload(bot)
 
   bot.on('error', handleError)
@@ -491,6 +561,7 @@ async function connect (options) {
       renderer.domElement.mozRequestPointerLock ||
       renderer.domElement.webkitRequestPointerLock
     document.addEventListener('mousedown', (e) => {
+      if (inventoryScreen.style.display === 'block') return
       if (!chat.inChat && !gameMenu.inMenu && !isMobileLike()) {
         renderer.domElement.requestPointerLock()
       }
@@ -504,6 +575,7 @@ async function connect (options) {
 
     document.addEventListener('keydown', (e) => {
       if (isTextInput(e.target)) return
+      if (inventoryScreen.style.display === 'block') return
       if (chat.inChat) return
       if (gameMenu.inMenu) return
 
@@ -518,10 +590,14 @@ async function connect (options) {
             case 'KeyQ': {
               const slot = bot.inventory.hotbarStart + (bot.quickBarSlot || 0)
               if (bot.inventory.slots[slot]) {
-                bot.clickWindow(slot, 0, 4).catch(() => {})
+                const all = e.ctrlKey || e.metaKey
+                bot.clickWindow(slot, all ? 1 : 0, 4).catch(() => {})
               }
               break
             }
+            case 'KeyF':
+              swapHands(bot)
+              break
             case 'ControlLeft':
               bot.setControlState('sprint', true)
               break
@@ -529,6 +605,7 @@ async function connect (options) {
               bot.setControlState('sneak', true)
               break
             case 'Space':
+              if (!e.repeat) handleJumpTap()
               bot.setControlState('jump', true)
               break
             case 'KeyD':
@@ -602,12 +679,28 @@ async function connect (options) {
     })
     bot.on('death', () => {
       inventoryScreen.style.display = 'none'
+      if (creativeFlying) setCreativeFlying(false)
       updateMobileOverlay()
+    })
+
+    bot.on('physicsTick', () => {
+      if (!creativeFlying || currentBot !== bot) return
+      const speed = bot.controlState.sprint ? 0.28 : 0.18
+      let vy = 0
+      if (bot.controlState.jump) vy += speed
+      if (bot.controlState.sneak) vy -= speed
+      bot.entity.velocity.y = vy
+    })
+
+    bot.on('game', () => {
+      if (!isCreativeMode(bot) && creativeFlying) setCreativeFlying(false)
+      mobileControls.setCreative(isCreativeMode(bot))
     })
 
     // Mobile controls
     inGame = true
     mobileControls.attachBot(bot)
+    mobileControls.setCreative(isCreativeMode(bot))
     mobileControls.setVisible(document.getElementById('options-screen').forceMobileControls)
     updateMobileOverlay()
 
@@ -655,6 +748,8 @@ function handleMobileAction (action) {
     document.getElementById('pause-screen').enableGameMenu()
     updateMobileOverlay()
     soundManager.play('click')
+  } else if (action === 'pick') {
+    if (cursor && cursor.pickBlock()) soundManager.play('click')
   }
 }
 
@@ -676,7 +771,8 @@ const mobileControls = getMobileControls({
     if (!cursor) return
     cursor.setDigging(on)
     if (on) soundManager.play('dig')
-  }
+  },
+  doubleJump: () => toggleCreativeFlight()
 })
 
 window.addEventListener('pmui-mobile-toggle', (e) => {

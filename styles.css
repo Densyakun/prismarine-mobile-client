@@ -212,6 +212,15 @@ body.mc-overlay-open #mobile-controls {
 .mc-hp i { background: #ff5a5a; }
 .mc-food i { background: #e0a43c; }
 
+.mc-creative .mc-stats {
+  display: none;
+}
+
+.mc-flying .mc-action[data-hold="jump"] {
+  background: rgba(79, 190, 120, 0.72);
+  border-color: rgba(220, 255, 230, 0.9);
+}
+
 .mc-top {
   position: absolute;
   top: calc(8px + env(safe-area-inset-top));
