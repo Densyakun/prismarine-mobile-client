@@ -131,6 +131,45 @@ function patchFlyingSquidDropTuning () {
   }
 }
 
+function patchFlyingSquidTabComplete () {
+  // flying-squid writes the pre-1.13 tab_complete packet shape (an array of
+  // strings). Modern protocols expect matches to be objects with a `match`
+  // field, so serializing the old shape throws and can take the embedded
+  // server down as soon as the client asks for a completion.
+  try {
+    const squidDir = path.dirname(require.resolve('flying-squid'))
+    const tabCompletePath = path.join(squidDir, 'src/lib/plugins/tabComplete.js')
+    if (!fs.existsSync(tabCompletePath)) return
+    const original = `  const sendTabComplete = (matches, existingContent) => {
+    player._client.write('tab_complete', {
+      matches: matches.filter((match) => match.startsWith(existingContent))
+    })
+  }`
+    const fixed = `  const sendTabComplete = (matches, existingContent) => {
+    const filtered = matches.filter((match) => match.startsWith(existingContent))
+    if (serv.registry.version['>=']('1.13')) {
+      player._client.write('tab_complete', {
+        transactionId: 0,
+        start: 0,
+        length: existingContent.length,
+        matches: filtered.map((match) => ({ match, tooltip: undefined }))
+      })
+    } else {
+      player._client.write('tab_complete', {
+        matches: filtered
+      })
+    }
+  }`
+    const source = fs.readFileSync(tabCompletePath, 'utf8')
+    if (source.includes(original)) {
+      fs.writeFileSync(tabCompletePath, source.replace(original, fixed), 'utf8')
+      console.log('Patched flying-squid tab completion packet')
+    }
+  } catch (e) {
+    console.warn('Could not patch flying-squid tab completion:', e.message)
+  }
+}
+
 function patchPrismarineWindowsDrop () {
   try {
     const windowsDir = path.dirname(require.resolve('prismarine-windows'))
@@ -174,4 +213,5 @@ patchFlyingSquidThrowVelocity()
 patchFlyingSquidDropSlot()
 patchFlyingSquidDropEntityType()
 patchFlyingSquidDropTuning()
+patchFlyingSquidTabComplete()
 patchPrismarineWindowsDrop()

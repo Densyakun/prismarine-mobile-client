@@ -32,6 +32,7 @@ require('./lib/menus/auth_screen')
 require('./lib/menus/inventory_screen')
 
 const net = require('net')
+const { isTextInput } = require('./lib/menus/components/common')
 global.THREE = require('three')
 const Cursor = require('./lib/cursor')
 const Sky = require('./lib/sky')
@@ -502,6 +503,7 @@ async function connect (options) {
     }, false)
 
     document.addEventListener('keydown', (e) => {
+      if (isTextInput(e.target)) return
       if (chat.inChat) return
       if (gameMenu.inMenu) return
 
