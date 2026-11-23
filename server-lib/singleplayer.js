@@ -2,6 +2,7 @@
 
 const path = require('path')
 const fs = require('fs')
+const { installVanillaDrops, forceSelectedGameMode } = require('./flying-squid-fixes')
 
 const DEFAULT_VERSION = '1.18.2'
 const START_TIMEOUT = 30000
@@ -89,7 +90,13 @@ class SingleplayerManager {
     await this.stop()
 
     const worldFolder = path.join(this.rootDir, world)
+    const exists = fs.existsSync(worldFolder)
+    if (!exists && options.create !== true) {
+      throw new Error('That world does not exist yet. Create a new world first.')
+    }
     fs.mkdirSync(worldFolder, { recursive: true })
+
+    forceSelectedGameMode()
 
     const generation = {
       name: 'diamond_square',
@@ -164,11 +171,33 @@ class SingleplayerManager {
       gameMode
     }
 
+    installVanillaDrops(server)
     server.on('error', (err) => {
       console.error('[singleplayer]', err)
     })
 
     return this.status()
+  }
+
+  listWorlds () {
+    if (!fs.existsSync(this.rootDir)) return []
+    return fs.readdirSync(this.rootDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => {
+        let updatedAt = 0
+        try { updatedAt = fs.statSync(path.join(this.rootDir, entry.name)).mtimeMs } catch (e) {}
+        return { name: entry.name, updatedAt }
+      })
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+  }
+
+  async deleteWorld (name) {
+    const world = sanitizeWorldName(name)
+    if (this.info && this.info.world === world) await this.stop()
+    const worldFolder = path.resolve(this.rootDir, world)
+    if (!worldFolder.startsWith(path.resolve(this.rootDir) + path.sep)) return false
+    await fs.promises.rm(worldFolder, { recursive: true, force: true })
+    return true
   }
 
   async stop () {

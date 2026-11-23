@@ -13,6 +13,7 @@ process.versions.node = process.versions.node || '20.0.0'
 
 const fs = require('fs')
 const squid = require('flying-squid')
+const { installVanillaDrops, forceSelectedGameMode } = require('../server-lib/flying-squid-fixes')
 
 const HOST = 'singleplayer.local'
 const DEFAULT_VERSION = '1.18.2'
@@ -89,8 +90,15 @@ async function doStart (options) {
 
   await stop()
 
+  const exists = await fs.__worldExists(world)
+  if (!exists && options.create !== true) {
+    throw new Error('That world does not exist yet. Create a new world first.')
+  }
+
   await fs.__restoreWorld(world)
   fs.mkdirSync('/world', { recursive: true })
+
+  forceSelectedGameMode()
 
   const generation = {
     name: 'diamond_square',
@@ -159,6 +167,7 @@ async function doStart (options) {
 
   server = mcServer
   info = { host: HOST, port, version, world, gameMode }
+  installVanillaDrops(server)
   server.on('error', (err) => console.error('[singleplayer]', err))
   startAutosave()
 
@@ -192,6 +201,17 @@ function persistNow () {
   if (info) fs.__persistWorld(info.world)
 }
 
+async function listWorlds () {
+  return { worlds: await fs.__listWorlds() }
+}
+
+async function deleteWorld (name) {
+  const world = sanitizeWorldName(name)
+  if (info && info.world === world) await stop()
+  await fs.__deleteWorld(world)
+  return { worlds: await fs.__listWorlds() }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', persistNow)
   document.addEventListener('visibilitychange', () => {
@@ -202,6 +222,8 @@ if (typeof window !== 'undefined') {
     stop,
     status,
     persistNow,
+    listWorlds,
+    deleteWorld,
     version: defaultVersion()
   }
 }

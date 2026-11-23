@@ -1,54 +1,33 @@
-/* global indexedDB */
-
 'use strict'
 
 const { Volume, createFsFromVolume } = require('memfs')
+const worldStore = require('./world_store')
 
-const DB_NAME = 'pmui-singleplayer'
-const STORE = 'worlds'
 const ROOT = '/world'
 
 const volume = new Volume()
 const fs = createFsFromVolume(volume)
 
-function openDb () {
-  return new Promise((resolve, reject) => {
-    if (typeof indexedDB === 'undefined') {
-      reject(new Error('IndexedDB is not available'))
-      return
-    }
-    const request = indexedDB.open(DB_NAME, 1)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE)
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
 async function readSavedWorld (name) {
-  const db = await openDb()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly')
-    const request = tx.objectStore(STORE).get(name)
-    request.onsuccess = () => resolve(request.result || null)
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
-  })
+  return worldStore.get(name)
 }
 
 async function writeSavedWorld (name, data) {
-  const db = await openDb()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite')
-    tx.objectStore(STORE).put(data, name)
-    tx.oncomplete = () => {
-      db.close()
-      resolve()
-    }
-    tx.onerror = () => reject(tx.error)
-  })
+  return worldStore.put(name, data)
+}
+
+async function worldExists (name) {
+  const saved = await worldStore.get(name)
+  return saved !== null
+}
+
+async function listWorlds () {
+  const names = await worldStore.keys()
+  return names.sort().map((name) => ({ name }))
+}
+
+async function deleteWorld (name) {
+  await worldStore.remove(name)
 }
 
 function snapshot (dir, files) {
@@ -108,7 +87,10 @@ const exported = Object.assign(fs, {
   __root: ROOT,
   __reset: reset,
   __restoreWorld: restoreWorld,
-  __persistWorld: persistWorld
+  __persistWorld: persistWorld,
+  __worldExists: worldExists,
+  __listWorlds: listWorlds,
+  __deleteWorld: deleteWorld
 })
 
 module.exports = exported

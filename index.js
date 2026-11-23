@@ -92,9 +92,16 @@ const minPitch = -0.5 * Math.PI
 
 function viewportSize () {
   const viewport = window.visualViewport
+  // `visualViewport` can briefly report 0 right after the first paint on some
+  // mobile browsers. Fall back to the window/document size so the WebGL canvas
+  // never starts at 1x1 (which made the title panorama appear to be missing).
+  const width = Math.round((viewport && viewport.width) || window.innerWidth ||
+    document.documentElement.clientWidth || 0)
+  const height = Math.round((viewport && viewport.height) || window.innerHeight ||
+    document.documentElement.clientHeight || 0)
   return {
-    width: Math.max(1, Math.round(viewport ? viewport.width : window.innerWidth)),
-    height: Math.max(1, Math.round(viewport ? viewport.height : window.innerHeight))
+    width: Math.max(1, width),
+    height: Math.max(1, height)
   }
 }
 
@@ -252,9 +259,14 @@ function onResize () {
   const size = viewportSize()
   viewer.camera.aspect = size.width / size.height
   viewer.camera.updateProjectionMatrix()
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   renderer.setSize(size.width, size.height)
 }
 window.addEventListener('resize', onResize)
+window.addEventListener('orientationchange', onResize)
+window.addEventListener('load', onResize)
+window.requestAnimationFrame(onResize)
+setTimeout(onResize, 100)
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', onResize)
   window.visualViewport.addEventListener('scroll', () => window.scrollTo(0, 0))

@@ -70,6 +70,19 @@ app.get('/api/singleplayer/status', noStore, (_, res) => {
   res.json(singleplayer.status())
 })
 
+app.get('/api/singleplayer/worlds', noStore, (_, res) => {
+  res.json({ worlds: singleplayer.listWorlds() })
+})
+
+app.post('/api/singleplayer/delete', noStore, express.json(), async (req, res) => {
+  try {
+    const deleted = await singleplayer.deleteWorld(req.body?.world)
+    res.json({ deleted, worlds: singleplayer.listWorlds() })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 app.post('/api/singleplayer/start', noStore, express.json(), async (req, res) => {
   try {
     res.json(await singleplayer.start(req.body || {}))
