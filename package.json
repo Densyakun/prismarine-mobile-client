@@ -72,7 +72,7 @@
     "minecraft-protocol": "https://github.com/PrismarineJS/node-minecraft-protocol/archive/a3c018efbf1b8645f16427e7b4a8185ea4218ee2.tar.gz",
     "mineflayer": "https://github.com/suisarbre/mineflayer/archive/ad4af12611fd55309bb387b2b416212bffb0eddf.tar.gz",
     "mineflayer-pathfinder": "^2.0.0",
-    "mocha": "^10.0.0",
+    "mocha": "^12.0.3",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "prismarine-chunk": "1.41.0",
