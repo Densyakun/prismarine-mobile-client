@@ -66,7 +66,7 @@
     "http-server": "^14.1.0",
     "https-browserify": "^1.0.0",
     "lodash-webpack-plugin": "^0.11.6",
-    "memfs": "^3.2.0",
+    "memfs": "^4.80.1",
     "minimizer-webpack-plugin": "^5.14.0",
     "minecraft-data": "^3.119.0",
     "minecraft-protocol": "https://github.com/PrismarineJS/node-minecraft-protocol/archive/a3c018efbf1b8645f16427e7b4a8185ea4218ee2.tar.gz",
