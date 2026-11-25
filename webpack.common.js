@@ -1,9 +1,28 @@
 const webpack = require('webpack')
 const path = require('path')
+const fs = require('fs')
 const CopyPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const WorkboxPlugin = require('workbox-webpack-plugin')
 // https://webpack.js.org/guides/production/
+
+// copy-webpack-plugin opens too many files at once for the ~30k viewer texture
+// files on Windows (EMFILE). Copy that directory sequentially once instead.
+class CopyDirectoryPlugin {
+  constructor (directories) {
+    this.directories = directories
+  }
+
+  apply (compiler) {
+    compiler.hooks.afterEmit.tap('CopyDirectoryPlugin', () => {
+      for (const { from, to } of this.directories) {
+        const target = path.resolve(compiler.options.output.path, to)
+        if (fs.existsSync(target)) continue
+        fs.cpSync(from, target, { recursive: true, force: true })
+      }
+    })
+  }
+}
 
 const config = {
   entry: path.resolve(__dirname, './index.js'),
@@ -42,6 +61,7 @@ const config = {
       // fs: require.resolve("fs-memory/singleton"),
       child_process: false,
       tls: false,
+      vm: false,
       perf_hooks: path.resolve(__dirname, 'lib/perf_hooks_replacement.js'),
       dns: path.resolve(__dirname, 'lib/dns.js')
     }
@@ -74,13 +94,15 @@ const config = {
       patterns: [
         { from: path.join(__dirname, '/styles.css'), to: './styles.css' },
         { from: path.join(__dirname, '/node_modules/prismarine-viewer/public/blocksStates/'), to: './blocksStates/' },
-        { from: path.join(__dirname, '/node_modules/prismarine-viewer/public/textures/'), to: './textures/' },
         { from: path.join(__dirname, '/node_modules/prismarine-viewer/public/worker.js'), to: './' },
         { from: path.join(__dirname, 'assets/'), to: './' },
         { from: path.join(__dirname, 'extra-textures/'), to: './extra-textures/' },
         { from: path.join(__dirname, 'config.json'), to: './config.json' }
       ]
-    })
+    }),
+    new CopyDirectoryPlugin([
+      { from: path.join(__dirname, '/node_modules/prismarine-viewer/public/textures/'), to: './textures/' }
+    ])
   ]
 }
 

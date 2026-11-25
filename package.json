@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/PrismarineJS/prismarine-web-client#readme",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "compression": "^1.7.4",
@@ -67,11 +67,15 @@
     "https-browserify": "^1.0.0",
     "lodash-webpack-plugin": "^0.11.6",
     "memfs": "^3.2.0",
-    "mineflayer": "^4.17.0",
+    "minimizer-webpack-plugin": "^5.14.0",
+    "minecraft-data": "^3.119.0",
+    "minecraft-protocol": "https://github.com/PrismarineJS/node-minecraft-protocol/archive/a3c018efbf1b8645f16427e7b4a8185ea4218ee2.tar.gz",
+    "mineflayer": "https://github.com/suisarbre/mineflayer/archive/ad4af12611fd55309bb387b2b416212bffb0eddf.tar.gz",
     "mineflayer-pathfinder": "^2.0.0",
     "mocha": "^10.0.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
+    "prismarine-chunk": "1.41.0",
     "prismarine-item": "^1.18.0",
     "prismarine-viewer": "^1.28.0",
     "process": "PrismarineJS/node-process",
@@ -85,5 +89,10 @@
     "webpack-dev-server": "^4.0.0",
     "webpack-merge": "^5.7.3",
     "workbox-webpack-plugin": "^6.1.2"
+  },
+  "overrides": {
+    "minecraft-data": "$minecraft-data",
+    "minecraft-protocol": "https://github.com/PrismarineJS/node-minecraft-protocol/archive/a3c018efbf1b8645f16427e7b4a8185ea4218ee2.tar.gz",
+    "prismarine-chunk": "$prismarine-chunk"
   }
 }

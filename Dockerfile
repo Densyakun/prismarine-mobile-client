@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:22-alpine
 # Without git installing the npm packages fails
 RUN apk add git
 RUN mkdir /app
