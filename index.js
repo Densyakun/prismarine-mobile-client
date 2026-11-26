@@ -12,6 +12,7 @@ require('./lib/chat')
 
 require('./lib/menus/components/button')
 require('./lib/menus/components/edit_box')
+require('./lib/menus/components/select')
 require('./lib/menus/components/slider')
 require('./lib/menus/components/hotbar')
 require('./lib/menus/components/health_bar')

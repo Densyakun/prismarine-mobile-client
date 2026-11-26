@@ -12,7 +12,7 @@ const config = require('./config.json')
 
 const app = express()
 
-const singleplayer = createSingleplayerManager({ defaultVersion: config.defaultVersion })
+const singleplayer = createSingleplayerManager({ defaultVersion: config.defaultSingleplayerVersion })
 
 app.disable('x-powered-by')
 

@@ -4,7 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const { installVanillaDrops, forceSelectedGameMode } = require('./flying-squid-fixes')
 
-const DEFAULT_VERSION = '1.18.2'
+const DEFAULT_VERSION = '1.20.1'
 const START_TIMEOUT = 30000
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]'])
 

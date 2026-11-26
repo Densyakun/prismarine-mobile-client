@@ -10,6 +10,6 @@ module.exports = (req, res) => {
     available: true,
     embedded: true,
     running: false,
-    version: config.defaultVersion || '1.18.2'
+    version: config.defaultSingleplayerVersion || '1.20.1'
   })
 }

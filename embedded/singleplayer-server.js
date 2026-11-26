@@ -16,7 +16,7 @@ const squid = require('flying-squid')
 const { installVanillaDrops, forceSelectedGameMode } = require('../server-lib/flying-squid-fixes')
 
 const HOST = 'singleplayer.local'
-const DEFAULT_VERSION = '1.18.2'
+const DEFAULT_VERSION = '1.20.1'
 const AUTOSAVE_INTERVAL = 15000
 
 let server = null
